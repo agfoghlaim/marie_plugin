@@ -45,11 +45,11 @@ function moh_guesthouse_post_type_room(){
       'feeds'       =>false
       ),
     'supports'=>array(
-      'title'
+      'title',
       // 'editor',
       // 'author',
       // 'custom-fields',
-      // 'thumbnail'
+      'thumbnail'
       )
 
 

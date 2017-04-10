@@ -27,6 +27,7 @@ function moh_meta_callback($post){
 	$moh_stored_meta = get_post_meta( $post->ID, '_room_id', true );
 	$moh_stored_meta_room_type = get_post_meta( $post->ID, '_room_type', true );
 	$moh_stored_meta_room_rate = get_post_meta( $post->ID, '_room_rate', true );
+	$moh_stored_meta_room_description = get_post_meta($post->ID, '_room_description',true);
 	echo "<h1> post id is: " .  $post->ID . "</h1>";
 	?>
 
@@ -34,7 +35,8 @@ function moh_meta_callback($post){
 
 		<div class="meta-row">
 			<div class="meta-th">
-				<label for="room-id" class="moh-row-title">Room ID</label>	
+				<label for="room-id" class="moh-row-title">Room ID</label>
+				<small>*This should always match the Post ID (see above).</small>	
 			</div>
 			<div class="meta-td">
 				<input type="text" name="room-id" id="room-id" value="<?php
@@ -67,8 +69,8 @@ function moh_meta_callback($post){
 	</div>
 	<div class="meta-editor"></div>
 	<?php
-	$content = '';
-	$editor_id = 'roomdescription';
+	$content = $moh_stored_meta_room_description;
+	$editor_id = 'room-description';
 	$settings = array(
 		'textarea_rows'=>5,
 		);
@@ -94,17 +96,27 @@ function moh_meta_save($post_id){
 	if(!isset($_POST['room-id'])){
 		return;
 	}
+	if(!isset($_POST['room-type'])){
+		return;
+	}
+	if(!isset($_POST['room-rate'])){
+		return;
+	}
+	if(!isset($_POST['room-description'])){
+		return;
+	}
 	$rm_id_data = sanitize_text_field($_POST['room-id'] );
 	$rm_type_data = sanitize_text_field($_POST['room-type']);
 	$rm_rate_data = sanitize_text_field($_POST['room-rate']);
-
+	$rm_description_data = sanitize_text_field($_POST['room-description']);
 
 	update_post_meta($post_id, '_room_id', $rm_id_data);
 	update_post_meta($post_id, '_room_type', $rm_type_data);
 	update_post_meta($post_id, '_room_rate', $rm_rate_data);
-
+	update_post_meta($post_id, '_room_description', $rm_description_data);
 	//update wp_rooms table with same info
 	global $wpdb;
+	global $post;
 	$tablename = $wpdb->prefix . 'rooms';
 	//chech wp_rooms
 	// $check_rooms="SELECT * FROM '$tablename'
@@ -123,14 +135,18 @@ function moh_meta_save($post_id){
 		// $wpdb->insert($tablename , $newdata );
 
 //}
-	//update
+	//update wp_rooms table
+	//this setup doesn't allow wp admin users to enter data directly into wp_rooms table
+	//changes to the room meta data update in wp_rooms here
+	//should be set up so that room_id cannot be changed
+	//_rm_id in the meta table
 	$thedata = array(
-		'rm_type'=>$rm_type_data,
-	
+				'rm_type'=>$rm_type_data,
+				);
+	$where 	= array(
+				'rm_id'=>$post->ID,
+				);
 
-		);
-	$where = array(
-		'rm_id'=>$rm_id_data);
 	$wpdb->update( $tablename, $thedata, $where);       
 	// $check_rooms = $wpdb->get_results( 
 	// 	"SELECT rm_id, rm_type, amt_per_night 

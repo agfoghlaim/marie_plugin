@@ -1,13 +1,19 @@
 
 jQuery('input#name-submit').on('click', function(){
-	alert(2);
+	//alert(7);
 	var arrive = jQuery('input#arrive').val();
 	var depart = jQuery('input#depart').val();
+	//alert(arrive);
+	//alert(depart);
 	
 	if(jQuery.trim(arrive) != ''){
-		jQuery.post('http://localhost/designassociates/marie_plugin/wp-content/plugins/moh_guesthouse/ajax/ajax.php', {arrive:arrive, depart:depart }, function(data){
+		//alert(ajaxurl);
+		//alert(34);
+		jQuery.post(myAjax.ajaxurl, {action:'moh_ajax_action', arrive:arrive, depart:depart }, function(data){
 			jQuery('div#name-data').html(data);
+			//alert(data);
 		});
 
 	}
 });
+

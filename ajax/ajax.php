@@ -1,44 +1,59 @@
-<?php
-define( 'SHORTINIT', true );
+// <?php
 
-require( '../../../../wp-load.php' );
+// define( 'SHORTINIT', true );
 
-if (isset($_POST['arrive'])){
+// require( '../../../../wp-load.php' );
+
+// //require( '../../../../wp-blog-header.php' );
+
+// if (isset($_POST['arrive'])){
 	
 	
-	$arrive = $_POST['arrive'];
-	$depart = $_POST['depart'];
+// 	$arrive = $_POST['arrive'];
+// 	$depart = $_POST['depart'];
  
-}
+// }
 
-global $wpdb;
-//$testit = new WP_Query($testing);
-$testing = $wpdb->get_results("SELECT * FROM wp_bookings");
-//$test_insert = wpdb->
-print_r($testing);
-echo $testing;
+// global $wpdb, $wp_query;
+// $tablename = $wpdb->prefix . 'bookings'; 
+// $the_rooms = $wpdb->get_results( $wpdb->prepare(
+// 	"SELECT distinct room_no, rm_type, amt_per_night, rm_id
+//  	 FROM wp_bookings, wp_rooms
+//     where wp_bookings.room_no = wp_rooms.actual_rm_no 
+//      and room_no not in(
+//                     select room_no from wp_bookings 
+//                     where checkin < %s
+//                     AND checkout > %s)", $depart, $arrive)); 
+// //foreach($the_rooms as $the_room){
+// 		echo "<h1>this is the query" . $the_room->room_no . "<h1>";
+// 		echo "<h1>this is the query" . $the_room->rm_id . "<h1>";
+// 		$loop = new WP_Query($args);
+// 		$args = array( 'post_type' => 'room', 'posts_per_page' => 10 );
+// 		//$loop = new wp_query( $args );
+// 		while ( $loop->have_posts() ) : $loop->the_post();
+//   		the_title();
+//   		echo '<div class="entry-content">';
+//   		the_content();
+//   		echo '</div>';
+// 		endwhile;
+// 		// global $post;
+// 		// $what = $the_room->rm_id;
+// 		// get_post($what);
+				
+// 		// 	//$queried_post = new WP_Query;
+// 		// $args = array(
+// 		// 	'post_type'=>'post',
+// 		// 	);
+// 		// $avail_rooms = new WP_Query($args);
+// 		// //$queried_post=get_post($the_room->rm_id);
+// 		// 	 echo "<pre>this";
+// 		// 	// //echo $queried_post->post_title;
+// 		// 	 var_dump($avail_rooms);
+// 		// 	// //echo $queried_post->post_content;
 
-$tablename = $wpdb->prefix . 'bookings';       
- //  Insert a recor d 
-$newdata = array( 'checkin' =>  $arrive,
-                  'checkout' => $depart); 
+// 		// 	 echo "</pre>";
 
-$workin = $wpdb->insert($tablename , $newdata );  
-if($workin){
-  echo "<p>ok</p>";
-}else{
-  echo "<h1>not</h1>";
-}
+	
+// //}
 
-
-// $query = "SELECT DISTINCT rm_no, description, amount 
-//                  from bookings, room_type, rooms
-//                 where bookings.rm_no = rooms.rm_id 
-//                 and rooms.rm_type = room_type.rm_type_id
-//                 and rm_no not in(
-//                     select rm_no from bookings 
-//                     where booking_date < '$depart'
-//                     AND checkout > '$arrive')";
-
-
-?>
+// ?>

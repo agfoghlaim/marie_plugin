@@ -19,9 +19,99 @@ require (plugin_dir_path(__FILE__) . 'moh-guesthouse-fields.php');
 
 
 
+function moh_admin_enqueue_scripts(){
+ // echo plugins_url('/js/global.js', __FILE__);
+  //global $pagenow, $typenow;
+  // if($pagenow == 'post.php' || $pagenow == 'post-new.php' && $typenow == 'room' ){
+  wp_enqueue_style( 'moh_enqueue_style', plugins_url('css/moh-style.css', __FILE__ ) );
+         
+   //}
+   wp_register_script( 'moh_global_js', plugin_dir_url( __FILE__).'/js/global.js',  array('jquery', 'jquery-ui-datepicker'), '1', true );   
+  
+   wp_localize_script('moh_global_js', 'myAjax', array(
+      'security' => wp_create_nonce('wp_rooms_action'),
+      'ajaxurl'  => admin_url('admin-ajax.php')
+      
+    ) );
 
+   // wp_enqueue_script( 'moh_global_js', plugin_dir_url( ).'/js/global.js', array('jquery', 'jquery-ui-datepicker'), '07042017', true );
+  wp_enqueue_script('jquery');
+  wp_enqueue_script('moh_global_js');
+}
+//add_action('admin_enqueue_scripts', 'moh_admin_enqueue_scripts' );
+add_action('init', 'moh_admin_enqueue_scripts' );
 //enqueue scripts
 //add_action( 'wp_enqueue_scripts', 'divi_child_moh_guesthouse');
+
+
+//ajax
+add_action('wp_ajax_nopriv_moh_ajax_action', 'moh_ajax');
+add_action('wp_ajax_moh_ajax_action', 'moh_ajax');
+
+function moh_ajax(){
+
+  if (isset($_POST['arrive'])){
+    $arrive = $_POST['arrive'];
+    $depart = $_POST['depart'];
+  }
+
+
+global $wpdb, $wp_query;
+
+$bookings = $wpdb->prefix . 'bookings'; 
+$rooms = $wpdb->prefix.'rooms';
+$the_rooms = $wpdb->get_results( $wpdb->prepare(
+  "SELECT distinct actual_rm_no, rm_type, amt_per_night, rm_id, rm_desc
+   FROM $bookings, $rooms
+    where $bookings.room_no = $rooms.actual_rm_no 
+     and room_no not in(
+                    select room_no from $bookings 
+                    where checkin < %s
+                    AND checkout > %s)", $depart, $arrive));
+
+     
+  $no_rooms = count($the_rooms);
+  if($no_rooms > 0){
+        echo "<p>" . $no_rooms . " rooms available for your chosen dates. </p>";
+        foreach($the_rooms as $the_room){
+          $rm_id = $the_room->rm_id;
+          $test_pic = get_the_post_thumbnail($rm_id,'thumbnail');
+          
+         
+          echo "<h3>" . $the_room->rm_type . "</h3>";
+          echo "<div class='post-thumbnail'>" . $test_pic . "</div>";
+          echo "<p>Room No: " . $the_room->actual_rm_no . "(room thumbnails can be changed by going to the 'Room' post for room " .$the_room->actual_rm_no . " ).</p>";
+          echo "<h5>" .$the_room->amt_per_night. " per night.</h5>";
+          echo "<p>" .$the_room->rm_desc. "<p/>";
+
+        }
+  }else {
+    echo "<p>Sorry, no rooms available on your selected dates.</p>";
+  }
+
+
+// $rm_desc = get_post_meta($rm_array[$i], '_room_description', false);
+// $rm_rate = get_post_meta($rm_array[$i], '_room_rate', false);
+// $rm_type = get_post_meta($rm_array[$i], '_room_type', false);
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+   
+
+
 
 
 
@@ -29,7 +119,8 @@ require (plugin_dir_path(__FILE__) . 'moh-guesthouse-fields.php');
 //create menu item
             function moh_guesthouse_create_menu() {               
             // create custom top-level men u    
-                add_menu_page('MOH Guesthouse Settings',
+                add_menu_page(
+                'MOH Guesthouse Settings',
                 'MOH GUESTHOUSE',
                 'manage_options',
                 'moh_guesthouse/moh_guesthouse-admin.php',
@@ -37,10 +128,8 @@ require (plugin_dir_path(__FILE__) . 'moh-guesthouse-fields.php');
                 '',
                 4);     
             } 
-
-           
-
 add_action( 'admin_menu', 'moh_guesthouse_create_menu' ) ;
+
 
 
 //add tables to db
@@ -69,9 +158,9 @@ function moh_install () {
   PRIMARY KEY  (booking_id),
   KEY guest_id (guest_id),
   KEY room_no (room_no)
-) $charset_collate;
+  ) $charset_collate;
 
-CREATE TABLE wp_guests (
+  CREATE TABLE wp_guests (
   guest_id mediumint(9) NOT NULL AUTO_INCREMENT,
   fname varchar(55) NOT NULL,
   lname varchar(55) NOT NULL,
@@ -86,7 +175,7 @@ CREATE TABLE wp_guests (
   PRIMARY KEY  (guest_id)
 ) $charset_collate;
 
-CREATE TABLE wp_rooms (
+  CREATE TABLE wp_rooms (
   rm_id mediumint(9) NOT NULL,
   rm_type varchar(55) NOT NULL,
   rm_type_id mediumint(9) NOT NULL,
@@ -96,15 +185,15 @@ CREATE TABLE wp_rooms (
   KEY rm_type_id (rm_type_id)
 ) $charset_collate;
 
-CREATE TABLE wp_room_type (
+  CREATE TABLE wp_room_type (
   room_type_id mediumint(9) NOT NULL,
   description varchar(55) NOT NULL,
   post_id_wp mediumint(9),
   PRIMARY KEY  (room_type_id)
 ) $charset_collate;";
 
-require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-dbDelta( $sql );
+  require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+  dbDelta( $sql );
 }
 
 
@@ -132,15 +221,6 @@ class moh_guesthouse extends WP_Widget{
 		<div class="widget check-avail">
 			<h4>Marie Book Now</h4>
 			<?php include 'moh-index.php';?>
-			<!--start
-				Name: <input type="text" id="name" name="name">
-				Arrive: <input type="date" id="arrive" name="arrive">
-				depart: <input type="date" id="depart" name="depart">
-				<input type="submit" id="name-submit" value="Grab">
-				<div id="name-data">data</div>	
-				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-				<script type="text/javascript" src="js/global.js"></script>
-			end-->
 		</div>
 		<?php
 
