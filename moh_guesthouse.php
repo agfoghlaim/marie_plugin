@@ -30,6 +30,7 @@ function moh_admin_enqueue_scripts(){
   
    wp_localize_script('moh_global_js', 'myAjax', array(
       'security' => wp_create_nonce('wp_rooms_action'),
+      //'moh_avail_nonce' => wp_create_nonce('moh_ajax_action'),
       'ajaxurl'  => admin_url('admin-ajax.php')
       
     ) );
@@ -44,16 +45,71 @@ add_action('init', 'moh_admin_enqueue_scripts' );
 //add_action( 'wp_enqueue_scripts', 'divi_child_moh_guesthouse');
 
 
-//ajax
+
+ //to get room no from js and local storage 
+  function moh_ajax_room(){
+    $rm_no = $_POST['rm_no'];
+    echo "<p>This is the room no from php: " . $rm_no . "</p>";
+    die();
+  }
+  add_action('wp_ajax_nopriv_moh_ajax_action_room', 'moh_ajax_room');
+  add_action('wp_ajax_moh_ajax_action_room', 'moh_ajax_room');
+            
+
+  function moh_ajax_booking(){
+    $arr = $_POST['arr'];
+    $dep = $_POST['dep'];
+    $fn=$_POST['fname'];
+    $ln=$_POST['lname'];
+    $em=$_POST['email'];
+    $ad=$_POST['address'];
+    $country=$_POST['country'];
+    $phone=$_POST['phone'];
+    $postcode=$_POST['postcode'];
+    $adults=$_POST['no_adults'];
+    $children =$_POST['no_children'];
+    $arr_time=$_POST['arr_time'];
+
+    global $wpdb;
+     $add_guest = $wpdb->insert('wp_guests', array(
+    'fname' => '$fn',
+    'email' => '$email'
+    ));
+
+     if($add_guest){
+      echo "added";
+     }else{
+      echo "not added";
+     }
+
+
+    echo "<p>(php): ";
+    echo $_POST['arr'] . " ";
+    echo $_POST['dep'] . "</p>";
+    die();
+    }
+    add_action('wp_ajax_nopriv_moh_ajax_action_booking', 'moh_ajax_booking');
+    add_action('wp_ajax_moh_ajax_action_booking', 'moh_ajax_booking');
+
+
+
+//ajax for availabity query
 add_action('wp_ajax_nopriv_moh_ajax_action', 'moh_ajax');
 add_action('wp_ajax_moh_ajax_action', 'moh_ajax');
 
 function moh_ajax(){
 
+  if(! wp_verify_nonce( $_POST['moh_avail_nonce'], 'moh_ajax' )){
+   // return;
+    echo"fghjk";
+  }
+
+
   if (isset($_POST['arrive'])){
     $arrive = $_POST['arrive'];
     $depart = $_POST['depart'];
   }
+
 
 
 global $wpdb, $wp_query;
@@ -75,14 +131,21 @@ $the_rooms = $wpdb->get_results( $wpdb->prepare(
         echo "<p>" . $no_rooms . " rooms available for your chosen dates. </p>";
         foreach($the_rooms as $the_room){
           $rm_id = $the_room->rm_id;
-          $test_pic = get_the_post_thumbnail($rm_id,'thumbnail');
           
-         
+          $test_pic = get_the_post_thumbnail($rm_id,'thumbnail');
           echo "<h3>" . $the_room->rm_type . "</h3>";
           echo "<div class='post-thumbnail'>" . $test_pic . "</div>";
           echo "<p>Room No: " . $the_room->actual_rm_no . "(room thumbnails can be changed by going to the 'Room' post for room " .$the_room->actual_rm_no . " ).</p>";
           echo "<h5>" .$the_room->amt_per_night. " per night.</h5>";
           echo "<p>" .$the_room->rm_desc. "<p/>";
+          echo "<button class='get-the-room' id='book-".$rm_id . "'>Book This " . $the_room->rm_type . "</button>";
+          echo "<a href='book-room-".$the_room->actual_rm_no . "'>Book This " . $the_room->rm_type . "</a>";
+          ?>
+          <button  class="get-the-room" id="what" value="<?php echo $rm_id; ?>" >buckit</button>
+          
+          <?php
+
+
 
         }
   }else {
@@ -217,10 +280,15 @@ class moh_guesthouse extends WP_Widget{
 	}
 //output widget info
 	function widget($args, $instance){
-		?>
+   ?>
 		<div class="widget check-avail">
 			<h4>Marie Book Now</h4>
 			<?php include 'moh-index.php';?>
+       <input type="hidden" name="action" value="moh_ajax_action" />
+
+ <?php //wp_nonce_field( 'moh_ajax_action', 'moh_check_avail_nonce' ); 
+ wp_nonce_field( 'moh_ajax', 'moh_avail_nonce');
+ ?>
 		</div>
 		<?php
 
