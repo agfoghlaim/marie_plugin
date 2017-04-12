@@ -8,7 +8,7 @@ Version: 1.0
 
 */
 
-//exit if directly accessed not by wp
+
 if( ! defined( 'ABSPATH')){
   exit;
 }
@@ -16,49 +16,38 @@ if( ! defined( 'ABSPATH')){
 //add moh-guesthouse-custom-post
 require (plugin_dir_path(__FILE__) . 'moh-guesthouse-custom-post.php');
 require (plugin_dir_path(__FILE__) . 'moh-guesthouse-fields.php');
-
+require (plugin_dir_path(__FILE__) . 'moh-charge.php');
+require (plugin_dir_path(__FILE__) . 'stripe-php-4.7.0/init.php');
 
 
 function moh_admin_enqueue_scripts(){
- // echo plugins_url('/js/global.js', __FILE__);
-  //global $pagenow, $typenow;
-  // if($pagenow == 'post.php' || $pagenow == 'post-new.php' && $typenow == 'room' ){
-  wp_enqueue_style( 'moh_enqueue_style', plugins_url('css/moh-style.css', __FILE__ ) );
-         
-   //}
-   wp_register_script( 'moh_global_js', plugin_dir_url( __FILE__).'/js/global.js',  array('jquery', 'jquery-ui-datepicker'), '1', true );   
-  
-   wp_localize_script('moh_global_js', 'myAjax', array(
-      'security' => wp_create_nonce('wp_rooms_action'),
-      //'moh_avail_nonce' => wp_create_nonce('moh_ajax_action'),
-      'ajaxurl'  => admin_url('admin-ajax.php')
-      
-    ) );
 
-   // wp_enqueue_script( 'moh_global_js', plugin_dir_url( ).'/js/global.js', array('jquery', 'jquery-ui-datepicker'), '07042017', true );
+  wp_enqueue_style( 'moh_enqueue_style', plugins_url('css/moh-style.css', __FILE__ ) );
+  wp_enqueue_style('jquery-style', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css' );
+  wp_register_script( 'moh_global_js', plugin_dir_url( __FILE__).'/js/global.js',  array('jquery', 'jquery-ui-datepicker'), '1', true );   
+  wp_localize_script('moh_global_js', 'myAjax', array(
+      'security' => wp_create_nonce('wp_rooms_action'),
+      'ajaxurl'  => admin_url('admin-ajax.php')
+      ));
   wp_enqueue_script('jquery');
   wp_enqueue_script('moh_global_js');
 }
-//add_action('admin_enqueue_scripts', 'moh_admin_enqueue_scripts' );
 add_action('init', 'moh_admin_enqueue_scripts' );
-//enqueue scripts
-//add_action( 'wp_enqueue_scripts', 'divi_child_moh_guesthouse');
 
 
+/*===================for book individual room page================ */
 
- //to get room no from js and local storage 
-  function moh_ajax_room(){
-    $rm_no = $_POST['rm_no'];
-    echo "<p>This is the room no from php: " . $rm_no . "</p>";
-    die();
-  }
-  add_action('wp_ajax_nopriv_moh_ajax_action_room', 'moh_ajax_room');
-  add_action('wp_ajax_moh_ajax_action_room', 'moh_ajax_room');
-            
-
-  function moh_ajax_booking(){
-    $arr = $_POST['arr'];
-    $dep = $_POST['dep'];
+  //get guest info from form and add to db
+  function moh_ajax_guest_info(){
+    if(! check_ajax_referer('wp_rooms_action', 'security_info')){
+      echo "info nonce notok";
+    }else{
+      echo "info nonce ok";
+    }
+   // echo $arr;
+   // echo $_POST['dep'];
+    $arr = $_POST['checkin'];
+    $dep = $_POST['checkout'];
     $fn=$_POST['fname'];
     $ln=$_POST['lname'];
     $em=$_POST['email'];
@@ -70,65 +59,137 @@ add_action('init', 'moh_admin_enqueue_scripts' );
     $children =$_POST['no_children'];
     $arr_time=$_POST['arr_time'];
 
+/*===================for stripe================ */
+// if(isset ($_POST['stripeToken'] )){
+
+// $the_amount = '200';
+// echo $_POST['stripeToken'];
+
+// // Set your secret key: remember to change this to your live secret key in production
+// // See your keys here: https://dashboard.stripe.com/account/apikeys
+// \Stripe\Stripe::setApiKey("sk_test_ZmA7m9ZpVReJH7yFrlyL4wkL");
+
+// // Token is created using Stripe.js or Checkout!
+// // Get the payment token submitted by the form:
+// $token = $_POST['stripeToken'];
+// echo "<h1>" .$token. "</h1>";
+// // Charge the user's card:
+// $charge = \Stripe\Charge::create(array(
+//   "amount" => $the_amount,
+//   "currency" => "eur",
+//   "description" => "Example charge",
+//   "source" => $token
+// ));
+//   if($charge){
+//     echo "ok to make the booking";
+//     //moh_make_booking();
+//   }
+// }
+////////////////////// end stripe charge  
+//strt of stripe dep
+
     global $wpdb;
      $add_guest = $wpdb->insert('wp_guests', array(
-    'fname' => '$fn',
-    'email' => '$email'
+    'fname' => $fn,
+    'lname' => $ln,
+    'email' => $em,
+    'address' => $ad,
+    'country' => $country,
+    'postcode' => $postcode,
+    'phone' => $phone,
+    'no_adults' => $adults,
+    'no_children' => $children,
+    'arrival' => $arr_time
     ));
+     $guest = $wpdb->insert_id;
 
      if($add_guest){
-      echo "added";
+      echo $fn . " added, guest id is (secret) " . $guest;
+      echo "<p>arr: " . $arr . "</p>";
+      echo "<p>dep: ".$dep."</p>";
+      echo "<p>guest: ".$guest."</p>";
      }else{
-      echo "not added";
+      echo $fn . " not added";
      }
 
+     //booking query
+     $book_query = $wpdb->insert('wp_bookings', array(
+        'guest_id' => $guest,
+        'checkin' => $arr,
+        'checkout'=> $dep
+        //'room_no'=>
 
-    echo "<p>(php): ";
-    echo $_POST['arr'] . " ";
+      ));
+
+     
+
+     if($book_query){
+      $booking_id = $wpdb->insert_id;
+      echo "booking id is: " . $booking_id;
+      echo "booked";
+     }
+     else{
+      echo "not booked";
+     }
+   
+    die();
+
+  }
+  add_action('wp_ajax_nopriv_moh_ajax_action_guest_info', 'moh_ajax_guest_info');
+  add_action('wp_ajax_moh_ajax_action_guest_info', 'moh_ajax_guest_info');
+        
+//get arrival, departure date,room no from localStorage
+  add_action('wp_ajax_nopriv_moh_ajax_action_get_details', 'moh_ajax_get_details');
+  add_action('wp_ajax_moh_ajax_action_get_details', 'moh_ajax_get_details');
+
+  //for bookroom, get room no id from localStorage via global.js ajax
+  function moh_ajax_get_details(){
+    if(! check_ajax_referer('wp_rooms_action', 'security_rm')){
+        echo "nonce notok";
+    }else{
+        echo "nonce ok";
+    }
+    $rm_no = $_POST['rm_no'];
+    echo "<p>You are booking" . $rm_no . " from ";
+    echo $_POST['arr'] . " until ";
     echo $_POST['dep'] . "</p>";
     die();
     }
-    add_action('wp_ajax_nopriv_moh_ajax_action_booking', 'moh_ajax_booking');
-    add_action('wp_ajax_moh_ajax_action_booking', 'moh_ajax_booking');
+ //end of stripe dep
 
+/*===================for check availabity and  select room================ */
 
-
-//ajax for availabity query
+//ajax for availabity query if statements set for testing only
 add_action('wp_ajax_nopriv_moh_ajax_action', 'moh_ajax');
 add_action('wp_ajax_moh_ajax_action', 'moh_ajax');
 
 function moh_ajax(){
-
-  if(! wp_verify_nonce( $_POST['moh_avail_nonce'], 'moh_ajax' )){
-   // return;
-    echo"fghjk";
+  if(! check_ajax_referer('wp_rooms_action', 'security')){
+  echo "not aj referer";
+  }else{
+  echo "ajax referer ok";
   }
-
-
   if (isset($_POST['arrive'])){
     $arrive = $_POST['arrive'];
     $depart = $_POST['depart'];
   }
 
-
-
-global $wpdb, $wp_query;
-
-$bookings = $wpdb->prefix . 'bookings'; 
-$rooms = $wpdb->prefix.'rooms';
-$the_rooms = $wpdb->get_results( $wpdb->prepare(
-  "SELECT distinct actual_rm_no, rm_type, amt_per_night, rm_id, rm_desc
-   FROM $bookings, $rooms
-    where $bookings.room_no = $rooms.actual_rm_no 
-     and room_no not in(
-                    select room_no from $bookings 
-                    where checkin < %s
-                    AND checkout > %s)", $depart, $arrive));
-
-     
+  global $wpdb, $wp_query;
+  $bookings = $wpdb->prefix . 'bookings'; 
+  $rooms = $wpdb->prefix.'rooms';
+  $the_rooms = $wpdb->get_results( $wpdb->prepare(
+    "SELECT distinct actual_rm_no, rm_type, amt_per_night, rm_id, rm_desc
+     FROM $bookings, $rooms
+      where $bookings.room_no = $rooms.actual_rm_no 
+       and room_no not in(
+                      select room_no from $bookings 
+                      where checkin < %s
+                      AND checkout > %s)", $depart, $arrive));
+   
   $no_rooms = count($the_rooms);
   if($no_rooms > 0){
         echo "<p>" . $no_rooms . " rooms available for your chosen dates. </p>";
+
         foreach($the_rooms as $the_room){
           $rm_id = $the_room->rm_id;
           
@@ -142,6 +203,12 @@ $the_rooms = $wpdb->get_results( $wpdb->prepare(
           echo "<a href='book-room-".$the_room->actual_rm_no . "'>Book This " . $the_room->rm_type . "</a>";
           ?>
           <button  class="get-the-room" id="what" value="<?php echo $rm_id; ?>" >buckit</button>
+          <button  class="moh-show-form" id="moh-show-form" >Test Ajax Button</button>
+          <form action="book-room-101">
+            <input id="show-booking-button" type="submit" style="display:none;" value="Book This Room" />
+          </form>
+          <div id="moh-booking-div" style="display:none"></div>
+          
           
           <?php
 
@@ -151,12 +218,11 @@ $the_rooms = $wpdb->get_results( $wpdb->prepare(
   }else {
     echo "<p>Sorry, no rooms available on your selected dates.</p>";
   }
+die();
 
+}
 
-// $rm_desc = get_post_meta($rm_array[$i], '_room_description', false);
-// $rm_rate = get_post_meta($rm_array[$i], '_room_rate', false);
-// $rm_type = get_post_meta($rm_array[$i], '_room_type', false);
- }
+/*===================end for check availabity and  select room================ */
 
 
 
@@ -171,8 +237,7 @@ $the_rooms = $wpdb->get_results( $wpdb->prepare(
 
 
  
-
-   
+/*===================for general and admin ================ */  
 
 
 
