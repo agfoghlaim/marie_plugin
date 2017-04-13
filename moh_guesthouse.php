@@ -58,35 +58,17 @@ add_action('init', 'moh_admin_enqueue_scripts' );
     $adults=$_POST['no_adults'];
     $children =$_POST['no_children'];
     $arr_time=$_POST['arr_time'];
+    $room_no = $_POST['rm_num'];
 
-/*===================for stripe================ */
-// if(isset ($_POST['stripeToken'] )){
+     //$rm_no = $_POST['rm_no'];
+        global $wpdb,$wp_query;;
+$sql = "SELECT actual_rm_no from wp_rooms where rm_id = '$room_no'";
+$get_room = $wpdb->get_results($sql);
+if($get_room){echo "got room";}else{echo "didn't get room";}
+foreach($get_room as $the_room){
+          $the_actual_room = $the_room->actual_rm_no;
+        }
 
-// $the_amount = '200';
-// echo $_POST['stripeToken'];
-
-// // Set your secret key: remember to change this to your live secret key in production
-// // See your keys here: https://dashboard.stripe.com/account/apikeys
-// \Stripe\Stripe::setApiKey("sk_test_ZmA7m9ZpVReJH7yFrlyL4wkL");
-
-// // Token is created using Stripe.js or Checkout!
-// // Get the payment token submitted by the form:
-// $token = $_POST['stripeToken'];
-// echo "<h1>" .$token. "</h1>";
-// // Charge the user's card:
-// $charge = \Stripe\Charge::create(array(
-//   "amount" => $the_amount,
-//   "currency" => "eur",
-//   "description" => "Example charge",
-//   "source" => $token
-// ));
-//   if($charge){
-//     echo "ok to make the booking";
-//     //moh_make_booking();
-//   }
-// }
-////////////////////// end stripe charge  
-//strt of stripe dep
 
     global $wpdb;
      $add_guest = $wpdb->insert('wp_guests', array(
@@ -111,13 +93,17 @@ add_action('init', 'moh_admin_enqueue_scripts' );
      }else{
       echo $fn . " not added";
      }
+    // $room_no=$wpdb->get_results()
+   
+
+
 
      //booking query
      $book_query = $wpdb->insert('wp_bookings', array(
         'guest_id' => $guest,
         'checkin' => $arr,
-        'checkout'=> $dep
-        //'room_no'=>
+        'checkout'=> $dep,
+        'room_no'=> $the_actual_room
 
       ));
 
@@ -149,13 +135,14 @@ add_action('init', 'moh_admin_enqueue_scripts' );
     }else{
         echo "nonce ok";
     }
-    $rm_no = $_POST['rm_no'];
-    echo "<p>You are booking" . $rm_no . " from ";
+
+//echo "<h1>".$the_actual_room."</h1>";
+   
+    echo "<p>booking rm_id " . $rm_no . " " . $the_actual_room . " from ";
     echo $_POST['arr'] . " until ";
     echo $_POST['dep'] . "</p>";
     die();
     }
- //end of stripe dep
 
 /*===================for check availabity and  select room================ */
 
@@ -199,14 +186,15 @@ function moh_ajax(){
           echo "<p>Room No: " . $the_room->actual_rm_no . "(room thumbnails can be changed by going to the 'Room' post for room " .$the_room->actual_rm_no . " ).</p>";
           echo "<h5>" .$the_room->amt_per_night. " per night.</h5>";
           echo "<p>" .$the_room->rm_desc. "<p/>";
-          echo "<button class='get-the-room' id='book-".$rm_id . "'>Book This " . $the_room->rm_type . "</button>";
-          echo "<a href='book-room-".$the_room->actual_rm_no . "'>Book This " . $the_room->rm_type . "</a>";
+          //echo "<button class='get-the-room' id='book-".$rm_id . "'>Book This " . $the_room->rm_type . "</button>";
+         // echo "<a href='book-room-".$the_room->actual_rm_no . "'>Book This " . $the_room->rm_type . "</a>";
           ?>
-          <button  class="get-the-room" id="what" value="<?php echo $rm_id; ?>" >buckit</button>
-          <button  class="moh-show-form" id="moh-show-form" >Test Ajax Button</button>
+          <button  class="get-the-room" id="what" value="<?php echo $rm_id; ?>" >Select This Room</button>
           <form action="book-room-101">
-            <input id="show-booking-button" type="submit" style="display:none;" value="Book This Room" />
+            <input id="show-booking-button" type="submit" style="display:none;" value="Book Now" />
           </form>
+         <!--  <button  class="moh-show-form" id="moh-show-form" >Test Ajax Button</button> -->
+          
           <div id="moh-booking-div" style="display:none"></div>
           
           

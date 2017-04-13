@@ -85,6 +85,7 @@ xhr.onload = function(){
 
 
 	$('input#date-submit').on('click', function(){
+		
 		var arrive = $('input#arrive').val();
 		var depart = $('input#depart').val();
 		var arrDate = 'arrDate';
@@ -108,7 +109,7 @@ xhr.onload = function(){
 	var dep = JSON.parse(localStorage.getItem("depDate"));
 	var rm_num = JSON.parse(localStorage.getItem("rm_no"));
 	var security_rm;
-	$('div#booking-details').html("(AJAX says: ) You are booking from " + rm_num + " " + arr + " until " + dep);
+	$('div#booking-details').html("<h3>You are booking from "  + arr + " until " + dep + "</h3>");
 	$.post(myAjax.ajaxurl, {action:'moh_ajax_action_get_details', arr:arr, dep:dep, rm_no:rm_num, security_rm: myAjax.security }, function(data2){
 				$('div#booking-data').html(data2);
 			
@@ -127,6 +128,7 @@ xhr.onload = function(){
 	    console.log($(this).val());
 	    var rmNo = $(this).val();
 	    var rm_no = 'rm_no';
+	    $('.get-the-room').text('Room Selected');
 	    localStorage.setItem(rm_no, JSON.stringify(rmNo));
 	    //display button link to booking page
 	    $('input#show-booking-button').show();

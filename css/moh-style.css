@@ -1,6 +1,10 @@
 /*.entry-content{
 	background-color: black;
 }*/
+.moh-full-width{
+  width: 100%;
+  margin-bottom: 20px;
+}
 
 .StripeElement {
   background-color: white;
