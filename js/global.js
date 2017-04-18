@@ -145,7 +145,44 @@ function checkDateFormat(theDt){
 		}
 }
 
+//alternative ajax 'test check avail button'
 
+window.onload = function(){
+	var dateSubmit = document.getElementById('test-submit');
+	function availAjaxRequest(formData, action){
+		$.ajax({
+			type:'POST',
+			dataType: 'json',
+			url: myAjax.ajaxurl,
+			data: {
+				action: action,
+				data: formData,
+				submission: document.getElementById('xyz').value,
+				security: myAjax.checkAvail_security
+			},
+			success: function(response){
+				if(response.success){
+					alert("aj ok");
+					alert(response.data);
+				}else{
+					alert("aj not ok");
+				}
+			}
+		});
+	};
+
+
+	dateSubmit.addEventListener('click', function(e){
+		e.preventDefault();
+		var formData = {
+			moh_test_arrive: document.getElementById('arrive').value,
+			moh_test_depart: document.getElementById('depart').value
+
+		}
+		console.log("hiya");
+		availAjaxRequest(formData, 'moh_test_ajax_action');
+	});
+}//end window onload function
 
 	$('input#date-submit').on('click', function(){
 	

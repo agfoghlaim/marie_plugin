@@ -27,7 +27,8 @@ function moh_admin_enqueue_scripts(){
   wp_register_script( 'moh_global_js', plugin_dir_url( __FILE__).'/js/global.js',  array('jquery', 'jquery-ui-datepicker'), '1', true );   
   wp_localize_script('moh_global_js', 'myAjax', array(
       'security' => wp_create_nonce('wp_rooms_action'),
-      'ajaxurl'  => admin_url('admin-ajax.php')
+      'ajaxurl'  => admin_url('admin-ajax.php'),
+      'checkAvail_security'=>wp_create_nonce('moh_check_availabity')
       ));
   wp_enqueue_script('jquery');
   wp_enqueue_script('moh_global_js');
@@ -143,7 +144,16 @@ foreach($get_room as $the_room){
     echo $_POST['dep'] . "</p>";
     die();
     }
-
+/*==========moh_test_ajax_action */
+function moh_test_ajax_action(){
+  $test_arrive = sanitize_text_field($_POST['data']['moh_test_arrive'] );
+  $test_depart = sanitize_text_field($_POST['data']['moh_test_depart'] );
+ wp_send_json_success($test_arrive);
+  
+}
+add_action('wp_ajax_moh_test_ajax_action', 'moh_test_ajax_action'  );
+add_action('wp_ajax_nopriv_moh_test_ajax_action', 'moh_test_ajax_action'  );
+/*===========end moh_test_ajax_action*/
 /*===================for check availabity and  select room================ */
 
 //ajax for availabity query if statements set for testing only
