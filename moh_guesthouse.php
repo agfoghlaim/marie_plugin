@@ -239,14 +239,26 @@ die();
                 'MOH Guesthouse Settings',
                 'MOH GUESTHOUSE',
                 'manage_options',
-                'moh_guesthouse/moh_guesthouse-admin.php',
-                '',
+                'moh_bookings_page',
+                'moh_the_bookings_callback',
                 '',
                 4);     
-            } 
+            }
+           
 add_action( 'admin_menu', 'moh_guesthouse_create_menu' ) ;
 
-
+      // function moh_guesthouse_create_menu() {               
+      //       // create custom top-level men u    
+      //           add_menu_page(
+      //           'edit.php?post_type=room',
+      //           'View Bookings',
+      //           'View Bookings',
+      //           'manage_options',
+      //           'moh_bookings_page',
+      //           'moh_the_bookings_callback'
+                
+      //           );     
+      //       }
 
 //add tables to db
 register_activation_hook( __FILE__, 'moh_install' );
