@@ -22,7 +22,11 @@
 		<p id="show-nights"></p>
 		
 		<!--<script type="text/javascript" src="http://localhost/designassociates/marie_plugin/wp-content/plugins/moh_guesthouse/js/global.js"></script>-->
-		
+		<div id="show-rooms-info"></div>
+          
+          <div id="moh-booking-div" style="display:none"></div>
+          <div class="room-booking-button"></div>
+	
 	</body>
 
 </html>

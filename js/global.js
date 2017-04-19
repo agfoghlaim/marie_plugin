@@ -1,19 +1,6 @@
 jQuery(document).ready(function($){
  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 //show booking form book room page
  $(document).on("click", "#moh-show-form", function(e){
  		alert(678);
@@ -92,8 +79,8 @@ xhr.onload = function(){
  $('.datepicker').datepicker({ dateFormat: 'yy-mm-dd' });
 
 function arrivalInFuture(){
-	arrive = $('input#arrive').val();
-	depart = $('input#depart').val();
+	arrive = document.getElementById('arrive').value;
+	depart = document.getElementById('depart').value;
 	var arr = new Date(arrive);
 	var dep = new Date(depart);
 	var now = new Date();
@@ -104,28 +91,28 @@ function arrivalInFuture(){
 	
 	if( checkDateFormat(arrive) && checkDateFormat(depart) ){
 		if(arr > new Date() && arr < new Date(sixMonths)){
-			console.log("pass 6 months");
+			//console.log("pass 6 months");
 			//if it passes above check before dept
 			if(arr<dep){
-				console.log("arrival is before dept");
+				//console.log("arrival is before dept");
 				//if arr passes before dept check 2 weeks
 				if(dep-arr <=1209600000){
 					return true;
-					console.log("less than 2 weeks");
+					//console.log("less than 2 weeks");
 				}else{
-					arrMsg.html('book for max 2 weeks');
+					arrMsg.html('Sorry we only accept bookings for a maximum of 14 days.');
 				}
 				
 			}else{
-				arrMsg.html('Arrival should be before dep');
+				arrMsg.html('Please check Arrival Date is before Departure Date');
 			}
 		}else{
-			console.log("fail");
-			arrMsg.html('Arrival must be less than 6 months');
+			//console.log("fail");
+			arrMsg.html('Please enter a valid Arrival Date, date must be in the future and within 6 months');
 		}
 	}//end check dateformat()
 	else{
-		console.log("date format fail");
+		//console.log("date format fail");
 		arrMsg.html('Please enter date in format yyyy-mm-dd.');
 	}
 }
@@ -188,6 +175,7 @@ window.onload = function(){
 	
 		arrive = $('input#arrive').val();
 		depart = $('input#depart').val();
+		var submission = document.getElementById('xyz').value;
 		
 		var arrDate = 'arrDate';
 		var depDate = 'depDate';
@@ -202,16 +190,60 @@ window.onload = function(){
 		
 		
 		if($.trim(arrive) != '' && $.trim(depart) != '' && arrivalInFuture()){
-			$.post(myAjax.ajaxurl, {action:'moh_ajax_action', arrive:arrive, depart:depart, security: myAjax.security }, function(data){
-				$('div#date-data').html(data);
-				numNights.val(diff);
-				console.log(numNights);
-				console.log(diff);
+			$.ajax({
+				type: 'POST',
+				datatype: 'json',
+				url: myAjax.ajaxurl,
+				data: {action:'moh_ajax_action', arrive:arrive, depart:depart,submission:submission, security: myAjax.security },
+				success: function(response){
+					console.log("this is the test " + response);
+					//$('div#thumbs').html(response[0].room_thumbnail + response[0].room_type);
+					//var roomDetails = "";
+					for(i in response){
+						//roomDetails += response[i].room_description;
+						//roodDetails += response[i].room_rate;
+					$('div#show-rooms-info').append(response[i].room_number,
+													response[i].room_thumbnail,
+													response[i].room_rate, 
+													response[i].room_type, 
+													response[i].room_description,
+													response[i].room_book_button,
+													response[i].room_booking_form
+													);
+					//var theButtons = $('.room-booking-button');
+						// $(document).on("click", ".room-booking-button", function(e) {
+	  			// 			$(this).html(response[i].room_book_button);
+	  			// 		)};
+					//$('.room-booking-button')[0].html(response[i].room_book_button);	
+					}
+					
+				},
+				error: function(){
+					console.log("this is an error");
+				} 
 			});
+			// $.post(myAjax.ajaxurl, {action:'moh_ajax_action', arrive:arrive, depart:depart,submission:submission, security: myAjax.security }, function(data){
+			// 	//$('div#date-data').html(data[0].type);
+			// 	$('div#thumbs').html(data[0].room_thumbnail);
+			// 	console.log(data[0].room_number);
+			// 	numNights.val(diff);
+			// 	console.log(numNights);
+			// 	console.log(diff);
+			// });
 
+		}else{
+			arrMsg = $('p#arr-err'); 
+			arrMsg.html("Please enter a valid arrival and departure date.");
 		}
 	});
 	
+
+
+
+
+
+
+
 
 	//send selected arrival and departure dates to page-book-room-***
 	var arr = JSON.parse(localStorage.getItem("arrDate"));
@@ -225,22 +257,16 @@ window.onload = function(){
 			});
 
 	
-	// $.post(myAjax.ajaxurl, {action:'moh_ajax_get_details', rm_no:rm_num}, function(data3){
-	// 				$('div#room-no').html(data3);
-				
-				
-	// 			});
-
 
 	$(document).on("click", ".get-the-room", function(e) {
 	    console.log("clicked: %o",  this);
 	    console.log($(this).val());
 	    var rmNo = $(this).val();
 	    var rm_no = 'rm_no';
-	    $('.get-the-room').text('Room Selected');
+	    $(this).text('Room Selected');
 	    localStorage.setItem(rm_no, JSON.stringify(rmNo));
 	    //display button link to booking page
-	    $('input#show-booking-button').show();
+	    $('input.show-booking-button').show();
 	  });
 
 	//handle booking form
@@ -297,4 +323,3 @@ window.onload = function(){
 
 
 });
-

@@ -146,9 +146,16 @@ foreach($get_room as $the_room){
     }
 /*==========moh_test_ajax_action */
 function moh_test_ajax_action(){
+  //check honey
+  if(!empty($_POST['data']['submission'])){
+    wp_send_json_error('honey fail' );
+  }
+   if(! check_ajax_referer('moh_test_ajax_action', 'security')){
+ wp_send_json_error('ajax referer fail' );
+  }
   $test_arrive = sanitize_text_field($_POST['data']['moh_test_arrive'] );
   $test_depart = sanitize_text_field($_POST['data']['moh_test_depart'] );
- wp_send_json_success($test_arrive);
+  wp_send_json_success($test_arrive);
   
 }
 add_action('wp_ajax_moh_test_ajax_action', 'moh_test_ajax_action'  );
@@ -162,13 +169,62 @@ add_action('wp_ajax_moh_ajax_action', 'moh_ajax');
 
 function moh_ajax(){
   if(! check_ajax_referer('wp_rooms_action', 'security')){
-  echo "not aj referer";
-  }else{
-  echo "ajax referer ok";
+  wp_send_json_error('Server Says: ajax referer not ok' );
   }
-  if (isset($_POST['arrive'])){
-    $arrive = $_POST['arrive'];
-    $depart = $_POST['depart'];
+  if(!empty($_POST['submission'])){
+    wp_send_json_error('Server Says: honey fail' );
+  }
+function moh_check_date_format($the_date){
+  $yr = substr($the_date,0,4);
+  $mt = substr($the_date,5,2);
+  $dt = substr($the_date,8,2);
+  if (is_numeric($yr) && is_numeric($mt) && is_numeric($dt)){
+    //echo "yr is   " . $yr;
+    //echo "mt is   " . $mt;
+    //echo "dt is   " . $dt;
+    //var_dump(checkdate($mt,$dt,$yr));
+    return checkdate($mt,$dt,$yr);
+  }
+}
+
+
+  if (isset($_POST['arrive']) && isset($_POST['depart'])){
+    $arrive = sanitize_text_field($_POST['arrive']);
+    $depart = sanitize_text_field($_POST['depart']);
+
+      if(!moh_check_date_format($arrive) || !moh_check_date_format($depart)){
+        wp_send_json_error('Server Says: Incorrect date format' );
+      }
+
+    $sixMonths = new dateTime('+6 months');
+    $twoWeeks = new dateTime('+2 weeks');
+    $now = date('Y-m-d');
+    $checkArr = date_create_from_format ( 'Y-m-d' , $arrive);
+    $checkDep = date_create_from_format ( 'Y-m-d' , $depart);
+    
+    if(strlen($arrive) !==10 || strlen($depart) !==10){
+      wp_send_json_error('Server Says: Incorrect date format' );
+    }
+    if($arrive < $now){
+      //echo"arr is greater than now</br>";
+      wp_send_json_error('Server Says: Oops, check Arrival Date is in the future.' );
+    }
+    if($arrive !== date_format($checkArr, 'Y-m-d') || $depart !== date_format($checkDep, 'Y-m-d')){
+     //echo "arr is correct format </br>";
+    }
+    if($arrive>$depart){
+      //echo "it is less than dep</br>";
+      wp_send_json_error('Server Says: Oops, check Arrival Date is before Departure Date.' );
+    }
+    if($arrive > $sixMonths){
+      //echo "less than 6 months</br>";
+      wp_send_json_error('Server Says: Sorry, we only accept bookings up to 6 months in advance.' );
+    }
+    if($depart-$arrive>date_format($twoWeeks,'Y-m-d')){
+     // echo "less than two weeks";
+       wp_send_json_error('Server Says: Sorry, we only accept bookings up to two weeks.' );
+    }
+
   }
 
   global $wpdb, $wp_query;
@@ -185,34 +241,26 @@ function moh_ajax(){
    
   $no_rooms = count($the_rooms);
   if($no_rooms > 0){
-        echo "<p>" . $no_rooms . " rooms available for your chosen dates. </p>";
-
+       // echo "<p>" . $no_rooms . " rooms available for your chosen dates. </p>";
+         $testResponse = array();
         foreach($the_rooms as $the_room){
-          $rm_id = $the_room->rm_id;
+        $rm_id = $the_room->rm_id;
+          $room_pic = get_the_post_thumbnail($rm_id,'thumbnail');
+           $testResponse[] = array(
+            "room_type" => "<h3>" . $the_room->rm_type . "</h3>",
+            "room_number"=>"<p>".$the_room->actual_rm_no."</p>",
+            "room_description"=>"<p>".$the_room->rm_desc."<p>",
+            "room_rate"=>"<h5>".$the_room->amt_per_night."</h5>",
+            "room_id"=>$the_room->rm_id,
+            "room_thumbnail"=>$room_pic, //sending the whole image tag
+            "room_book_button"=> "<button class='get-the-room'  value='".$the_room->rm_id . "'>select room</button>",
+            "room_booking_form"=>"<form action='book-room-101'><input class='show-booking-button' type='submit' style='display:none;' value='book now' /></form>"
+           
+            );
           
-          $test_pic = get_the_post_thumbnail($rm_id,'thumbnail');
-          echo "<h3>" . $the_room->rm_type . "</h3>";
-          echo "<div class='post-thumbnail'>" . $test_pic . "</div>";
-          echo "<p>Room No: " . $the_room->actual_rm_no . "(room thumbnails can be changed by going to the 'Room' post for room " .$the_room->actual_rm_no . " ).</p>";
-          echo "<h5>" .$the_room->amt_per_night. " per night.</h5>";
-          echo "<p>" .$the_room->rm_desc. "<p/>";
-          //echo "<button class='get-the-room' id='book-".$rm_id . "'>Book This " . $the_room->rm_type . "</button>";
-         // echo "<a href='book-room-".$the_room->actual_rm_no . "'>Book This " . $the_room->rm_type . "</a>";
-          ?>
-          <button  class="get-the-room" id="what" value="<?php echo $rm_id; ?>" >Select This Room</button>
-          <form action="book-room-101">
-            <input id="show-booking-button" type="submit" style="display:none;" value="Book Now" />
-          </form>
-         <!--  <button  class="moh-show-form" id="moh-show-form" >Test Ajax Button</button> -->
-          
-          <div id="moh-booking-div" style="display:none"></div>
-          
-          
-          <?php
-
-
 
         }
+        wp_send_json($testResponse);
   }else {
     echo "<p>Sorry, no rooms available on your selected dates.</p>";
   }
