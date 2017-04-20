@@ -35,7 +35,73 @@ function moh_admin_enqueue_scripts(){
 }
 add_action('init', 'moh_admin_enqueue_scripts' );
 
+/*global functions*/
+function moh_check_date_format($the_date){
+  $yr = substr($the_date,0,4);
+  $mt = substr($the_date,5,2);
+  $dt = substr($the_date,8,2);
+  if (is_numeric($yr) && is_numeric($mt) && is_numeric($dt)){
+    //echo "yr is   " . $yr;
+    //echo "mt is   " . $mt;
+    //echo "dt is   " . $dt;
+    //var_dump(checkdate($mt,$dt,$yr));
+    return checkdate($mt,$dt,$yr);
+  }
+}
 
+/**/
+/*default action for check availabity form, ie if javaScript disabled*/
+add_action('admin_post_nopriv_moh_avail_default', 'moh_avail_default');
+add_action('admin_post_moh_avail_default', 'moh_avail_default');
+
+function moh_avail_default(){
+ //check honey on form moh-index.php
+  if(!empty($_POST['date-submitted'])){
+    echo 'Server Says: honey fail' ;
+      echo "<h1>Marie o hara</h1>";
+  }
+   if (isset($_POST['arrive']) && isset($_POST['depart'])){
+    $arrive = sanitize_text_field($_POST['arrive']);
+    $depart = sanitize_text_field($_POST['depart']);
+
+      if(!moh_check_date_format($arrive) || !moh_check_date_format($depart)){
+        echo "server says: incorrect date format";
+      }
+
+    $sixMonths = new dateTime('+6 months');
+    $twoWeeks = new dateTime('+2 weeks');
+    $now = date('Y-m-d');
+    $checkArr = date_create_from_format ( 'Y-m-d' , $arrive);
+    $checkDep = date_create_from_format ( 'Y-m-d' , $depart);
+    
+    if(strlen($arrive) !==10 || strlen($depart) !==10){
+      wp_send_json_error('Server Says: Incorrect date format' );
+    }
+    if($arrive < $now){
+      echo"arr is greater than now</br>";
+      //wp_send_json_error('Server Says: Oops, check Arrival Date is in the future.' );
+    }
+    if($arrive !== date_format($checkArr, 'Y-m-d') || $depart !== date_format($checkDep, 'Y-m-d')){
+        //wp_send_json_error('Server Says: Oops, check all dates are in the format yyyy-mm-dd.' );
+    }
+    if($arrive>$depart){
+      echo "it is less than dep</br>";
+     // wp_send_json_error('Server Says: Oops, check Arrival Date is before Departure Date.' );
+    }
+    if($arrive > $sixMonths){
+      echo "less than 6 months</br>";
+      //wp_send_json_error('Server Says: Sorry, we only accept bookings up to 6 months in advance.' );
+    }
+    if($depart-$arrive>date_format($twoWeeks,'Y-m-d')){
+     echo "less than two weeks";
+       //wp_send_json_error('Server Says: Sorry, we only accept bookings of up to two weeks in duration.' );
+    }
+
+  }
+
+}
+
+/*end of default action for check availabity form */
 /*===================for book individual room page================ */
 
   //get guest info from form and add to db
@@ -174,18 +240,6 @@ function moh_ajax(){
   if(!empty($_POST['submission'])){
     wp_send_json_error('Server Says: honey fail' );
   }
-function moh_check_date_format($the_date){
-  $yr = substr($the_date,0,4);
-  $mt = substr($the_date,5,2);
-  $dt = substr($the_date,8,2);
-  if (is_numeric($yr) && is_numeric($mt) && is_numeric($dt)){
-    //echo "yr is   " . $yr;
-    //echo "mt is   " . $mt;
-    //echo "dt is   " . $dt;
-    //var_dump(checkdate($mt,$dt,$yr));
-    return checkdate($mt,$dt,$yr);
-  }
-}
 
 
   if (isset($_POST['arrive']) && isset($_POST['depart'])){
@@ -255,8 +309,8 @@ function moh_check_date_format($the_date){
             "room_thumbnail"=>$room_pic, //sending the whole image tag
             "room_book_button"=> "<button class='get-the-room'  id='add-".$the_room->rm_id . "' value='".$the_room->rm_id . "'>select room</button>",
             "room_remove_button"=> "<button class='remove-the-room' id='remove-".$the_room->rm_id . "' style='display:none;'  value='".$the_room->rm_id . "'>remove room</button>",
-            "room_booking_form"=>"<form action='book-room-101'><input class='show-booking-button' type='submit' style='display:none;' value='book now' /></form>"
-           
+            "room_show_booking_form"=>"<form action=''><input class='show-booking-button' type='submit' style='display:none;' value='Book Now' /></form>"
+            
             );
           
 

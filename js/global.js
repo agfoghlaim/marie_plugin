@@ -6,22 +6,20 @@ jQuery(document).ready(function($){
  		alert(678);
  		mohGetForm();
  });
- function mohGetForm(){
- 		var xhr = new XMLHttpRequest();
-
-http://localhost/designassociates/marie_plugin/wp-admin/admin-ajax.php"
-xhr.open('GET', 'wp-content/plugins/moh_guesthouse/templates/moh-booking-form.php', true);
-xhr.send(null); //we're not passing any paramaters eg search paramater
-xhr.onload = function(){
-	var el = document.getElementById('moh-booking-div');
-	el.innerHTML = xhr.responseText;
-	$('div#booking-details').html("(AJAX says: ) You are booking from " + rm_num + " " + arr + " until " + dep);
-	$.post(myAjax.ajaxurl, {action:'moh_ajax_action_get_details', arr:arr, dep:dep, rm_no:rm_num, security_rm: myAjax.security }, function(data2){
-				$('div#booking-data').html(data2);
-			
+	function mohGetForm(){
+	 	var xhr = new XMLHttpRequest();
+		xhr.open('GET', 'wp-content/plugins/moh_guesthouse/templates/moh-booking-form.php', true);
+		xhr.send(null); //we're not passing any paramaters eg search paramater
+		xhr.onload = function(){
+			var el = document.getElementById('moh-booking-div');
+			el.innerHTML = xhr.responseText;
+			$('div#booking-details').html("(AJAX says: ) You are booking from " + rm_num + " " + arr + " until " + dep);
+			$.post(myAjax.ajaxurl, {action:'moh_ajax_action_get_details', arr:arr, dep:dep, rm_no:rm_num, security_rm: myAjax.security }, function(data2){
+					$('div#booking-data').html(data2);
 			});
-}
- }
+		}
+	}
+
  	$(document).on("click", "input#guest-info-form", function(e){
  		formGuestInfo();
  	});
@@ -171,8 +169,8 @@ window.onload = function(){
 	});
 }//end window onload function
 
-	$('input#date-submit').on('click', function(){
-	
+	$('input#date-submit').on('click', function(e){
+		e.preventDefault();
 		arrive = $('input#arrive').val();
 		depart = $('input#depart').val();
 		var submission = document.getElementById('xyz').value;
@@ -208,8 +206,8 @@ window.onload = function(){
 													response[i].room_type, 
 													response[i].room_description,
 													response[i].room_book_button,
-													response[i].room_booking_form, 
-													response[i].room_remove_button
+													response[i].room_remove_button,
+													response[i].room_show_booking_form
 													);
 			
 					}
@@ -248,9 +246,9 @@ window.onload = function(){
 
 	
 //room object for localStorage
-var roomObj = {
-	    	ids: []
-	    };
+		var roomObj = {
+			    	ids: []
+			    };
 
 	$(document).on("click", ".get-the-room", function(e) {
 		roomObj.ids.push($(this).val());
@@ -280,9 +278,15 @@ var roomObj = {
 					$('button#add-'+$(this).val()).text('Select Room').fadeIn(1000);
 			 	}
 			} 
+	});
+	//show booking form
+	$(document).on('click', '.show-booking-button', function(e){
+		e.preventDefault();
+		console.log(2);
+		mohGetForm();
+	});
 
-		
-});
+
 	//handle booking form
 	$('input#guest-info').on('click', function(){	
 	    var fn=$('input#fn').val();
