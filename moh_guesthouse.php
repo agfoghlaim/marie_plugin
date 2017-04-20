@@ -210,7 +210,7 @@ function moh_check_date_format($the_date){
       wp_send_json_error('Server Says: Oops, check Arrival Date is in the future.' );
     }
     if($arrive !== date_format($checkArr, 'Y-m-d') || $depart !== date_format($checkDep, 'Y-m-d')){
-     //echo "arr is correct format </br>";
+        wp_send_json_error('Server Says: Oops, check all dates are in the format yyyy-mm-dd.' );
     }
     if($arrive>$depart){
       //echo "it is less than dep</br>";
@@ -222,7 +222,7 @@ function moh_check_date_format($the_date){
     }
     if($depart-$arrive>date_format($twoWeeks,'Y-m-d')){
      // echo "less than two weeks";
-       wp_send_json_error('Server Says: Sorry, we only accept bookings up to two weeks.' );
+       wp_send_json_error('Server Says: Sorry, we only accept bookings of up to two weeks in duration.' );
     }
 
   }
@@ -253,7 +253,8 @@ function moh_check_date_format($the_date){
             "room_rate"=>"<h5>".$the_room->amt_per_night."</h5>",
             "room_id"=>$the_room->rm_id,
             "room_thumbnail"=>$room_pic, //sending the whole image tag
-            "room_book_button"=> "<button class='get-the-room'  value='".$the_room->rm_id . "'>select room</button>",
+            "room_book_button"=> "<button class='get-the-room'  id='add-".$the_room->rm_id . "' value='".$the_room->rm_id . "'>select room</button>",
+            "room_remove_button"=> "<button class='remove-the-room' id='remove-".$the_room->rm_id . "' style='display:none;'  value='".$the_room->rm_id . "'>remove room</button>",
             "room_booking_form"=>"<form action='book-room-101'><input class='show-booking-button' type='submit' style='display:none;' value='book now' /></form>"
            
             );

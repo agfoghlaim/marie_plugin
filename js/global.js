@@ -208,13 +208,10 @@ window.onload = function(){
 													response[i].room_type, 
 													response[i].room_description,
 													response[i].room_book_button,
-													response[i].room_booking_form
+													response[i].room_booking_form, 
+													response[i].room_remove_button
 													);
-					//var theButtons = $('.room-booking-button');
-						// $(document).on("click", ".room-booking-button", function(e) {
-	  			// 			$(this).html(response[i].room_book_button);
-	  			// 		)};
-					//$('.room-booking-button')[0].html(response[i].room_book_button);	
+			
 					}
 					
 				},
@@ -222,14 +219,7 @@ window.onload = function(){
 					console.log("this is an error");
 				} 
 			});
-			// $.post(myAjax.ajaxurl, {action:'moh_ajax_action', arrive:arrive, depart:depart,submission:submission, security: myAjax.security }, function(data){
-			// 	//$('div#date-data').html(data[0].type);
-			// 	$('div#thumbs').html(data[0].room_thumbnail);
-			// 	console.log(data[0].room_number);
-			// 	numNights.val(diff);
-			// 	console.log(numNights);
-			// 	console.log(diff);
-			// });
+		
 
 		}else{
 			arrMsg = $('p#arr-err'); 
@@ -257,18 +247,42 @@ window.onload = function(){
 			});
 
 	
+//room object for localStorage
+var roomObj = {
+	    	ids: []
+	    };
 
 	$(document).on("click", ".get-the-room", function(e) {
-	    console.log("clicked: %o",  this);
-	    console.log($(this).val());
-	    var rmNo = $(this).val();
-	    var rm_no = 'rm_no';
-	    $(this).text('Room Selected');
-	    localStorage.setItem(rm_no, JSON.stringify(rmNo));
-	    //display button link to booking page
-	    $('input.show-booking-button').show();
+		roomObj.ids.push($(this).val());
+	    var selectedRooms = [];
+	    selectedRooms.push(roomObj);
+	   $(this).text('Room Selected').fadeOut(1000);
+	   $('button#remove-'+$(this).val()).text('Remove Room').fadeIn(1000);
+	   
+	  
+	    localStorage.setItem('selected_rooms', JSON.stringify(selectedRooms));
+	    localStorage.setItem('rm_no', JSON.stringify($(this).val()));
+  		$('input.show-booking-button').show();
 	  });
 
+	//to remove selected room from localStorage
+	$(document).on('click', '.remove-the-room', function(e){
+		var selectedRooms = [];
+		
+		for(j=0;j< roomObj.ids.length;j++){
+		 		if(roomObj.ids[j] === $(this).val()){
+					//console.log("remove " + $(this).val());
+					var index = roomObj.ids.indexOf($(this).val());
+					roomObj.ids.splice(index, 1);
+					 selectedRooms.push(roomObj);
+					localStorage.setItem('selected_rooms', JSON.stringify(selectedRooms));
+					$(this).text('Room Removed').fadeOut(1000);
+					$('button#add-'+$(this).val()).text('Select Room').fadeIn(1000);
+			 	}
+			} 
+
+		
+});
 	//handle booking form
 	$('input#guest-info').on('click', function(){	
 	    var fn=$('input#fn').val();
