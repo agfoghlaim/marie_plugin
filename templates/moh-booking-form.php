@@ -1,5 +1,5 @@
 <!--<div class="booking-form" style="display:none;">form goes here -->
-<div class="booking-form">
+<div class="booking-form" id="theBookingForm">
 <h1>Book Rooms</h1>
 
 							<div id="booking-details">

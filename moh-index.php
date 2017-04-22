@@ -25,8 +25,9 @@
 		
 		<!--<script type="text/javascript" src="http://localhost/designassociates/marie_plugin/wp-content/plugins/moh_guesthouse/js/global.js"></script>-->
 		<div id="show-rooms-info"></div>
-        <div id="moh-booking-div" style="display:none"></div>
+        <div id="moh-booking-div" ></div>
         <div class="room-booking-button"></div>
+
 	
 	</body>
 
@@ -49,7 +50,7 @@
 			        echo "Please enter arrival and departure dates in the format yyyy-mm-dd";
 			        die();
 			      }
-
+//this validation needs work
 			    $sixMonths = new dateTime('+6 months');
 			    $twoWeeks = new dateTime('+2 weeks');
 			    $now = date('Y-m-d');

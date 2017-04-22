@@ -127,16 +127,38 @@ function moh_avail_default(){
     $arr_time=$_POST['arr_time'];
     $room_no = $_POST['rm_num'];
 
-     //$rm_no = $_POST['rm_no'];
-        global $wpdb,$wp_query;;
+    $room_nos = $_POST['rm_nums'];
+
+    //GET ACTUAL ROOM NUMBERS (IE NOT WP ROOM POST ID).
+    // PUT ACTUAL ROOM NUMBERS IN $actual_rooms_array
+
+    global $wpdb, $wp_query;
+    $actual_rooms_array = array();
+    foreach($room_nos as $room_no){
+           
+            $get_rms = $wpdb->get_results("SELECT actual_rm_no from wp_rooms where rm_id = '$room_no'");
+            //$rowCount = mysqli_num_rows(${'r_'.$room_no});
+            foreach($get_rms as $get_rm){
+              echo $get_rm->actual_rm_no;
+              array_push($actual_rooms_array, $get_rm->actual_rm_no);
+            }
+    }
+//var_dump($actual_rooms_array);
+
+
+
+//OLD CODE, FOR ONLY ALLOWED TO BOOK ONE ROOM PER TRANSACTION
+ /////////////////////
+global $wpdb,$wp_query;;
 $sql = "SELECT actual_rm_no from wp_rooms where rm_id = '$room_no'";
 $get_room = $wpdb->get_results($sql);
 if($get_room){echo "got room";}else{echo "didn't get room";}
 foreach($get_room as $the_room){
           $the_actual_room = $the_room->actual_rm_no;
         }
+/////////////////////////
 
-
+//ADD GUEST INFORMATION TO DB
     global $wpdb;
      $add_guest = $wpdb->insert('wp_guests', array(
     'fname' => $fn,
@@ -160,30 +182,34 @@ foreach($get_room as $the_room){
      }else{
       echo $fn . " not added";
      }
-    // $room_no=$wpdb->get_results()
+    
    
+//////////////////////////
+///PAYMENT WILL GO HERE////
+//////////////////////////
 
-
-
-     //booking query
-     $book_query = $wpdb->insert('wp_bookings', array(
+// BOOKING QUERY 
+     //array to hold booking ids
+     //$confirm_booking = array();
+    foreach($actual_rooms_array as $actual_room_to_book){
+       $book_query = $wpdb->insert('wp_bookings', array(
         'guest_id' => $guest,
         'checkin' => $arr,
         'checkout'=> $dep,
-        'room_no'=> $the_actual_room
-
+        'room_no'=> $actual_room_to_book
       ));
-
-     
-
-     if($book_query){
-      $booking_id = $wpdb->insert_id;
-      echo "booking id is: " . $booking_id;
-      echo "booked";
-     }
-     else{
-      echo "not booked";
-     }
+         if($book_query){
+        $booking_id = $wpdb->insert_id;
+        //array_push($confirm_booking, $wpdb->insert_id)
+        echo "booking id is: " . $booking_id . "<br>";
+        echo "booked";
+       }
+       else{
+        echo "not booked";
+       }
+          
+    }
+    
    
     die();
 
@@ -198,18 +224,55 @@ foreach($get_room as $the_room){
   //for bookroom, get room no id from localStorage via global.js ajax
   function moh_ajax_get_details(){
     if(! check_ajax_referer('wp_rooms_action', 'security_rm')){
-        echo "nonce notok";
-    }else{
-        echo "nonce ok";
+       // echo "nonce notok";
+        wp_send_json_error('ajax referer fail' );
     }
 
-//echo "<h1>".$the_actual_room."</h1>";
+
    
     echo "<p>booking rm_id " . $rm_no . " " . $the_actual_room . " from ";
     echo $_POST['arr'] . " until ";
     echo $_POST['dep'] . "</p>";
+
     die();
     }
+
+
+/*NEW FRIDAY */
+add_action('wp_ajax_nopriv_moh_booking_data_action', 'moh_booking_data_action');
+add_action('wp_ajax_moh_booking_data_action', 'moh_booking_data_action');
+function moh_booking_data_action(){
+
+  // todo check nonce
+
+  if(isset ($_POST['data']['arr'])){
+  
+    $data_rm_nums = $_POST['data']['rm_nums'];
+     $bookingResponse = array();
+ 
+      list($r1, $r2, $r3, $r4) =  $data_rm_nums;
+      $real_room_array = array();
+      for($i=0;$i<count($data_rm_nums);$i++){
+        $rm_i = $data_rm_nums[$i];
+        $real_room = $wpdb->get_results("SELECT actual_rm_no from wp_rooms where rm_id = '$rm_i'");
+        array_push($real_room_array, $real_room);
+      }
+     //}
+wp_send_json_success( "hello marie" . $data_rm_nums .$r1 . $r2 . $r3 . $r4 .$real_room_array);
+    echo '<pre>'; var_dump($data_rm_nums);
+    echo "</pre>";
+
+//}
+  
+  }else{
+    echo "bad friday";
+  }
+}
+
+
+
+
+/*END NEW FRIDAY*/
 /*==========moh_test_ajax_action */
 function moh_test_ajax_action(){
   //check honey
@@ -301,16 +364,18 @@ function moh_ajax(){
         $rm_id = $the_room->rm_id;
           $room_pic = get_the_post_thumbnail($rm_id,'thumbnail');
            $testResponse[] = array(
+
             "room_type" => "<h3>" . $the_room->rm_type . "</h3>",
             "room_number"=>"<p>".$the_room->actual_rm_no."</p>",
             "room_description"=>"<p>".$the_room->rm_desc."<p>",
             "room_rate"=>"<h5>".$the_room->amt_per_night."</h5>",
             "room_id"=>$the_room->rm_id,
             "room_thumbnail"=>$room_pic, //sending the whole image tag
-            "room_book_button"=> "<button class='get-the-room'  id='add-".$the_room->rm_id . "' value='".$the_room->rm_id . "'>select room</button>",
+            "room_book_button"=> "<button class='get-the-room' name='add-".$the_room->rm_id . "'  id='add-".$the_room->rm_id . "' value='".$the_room->rm_id . "'>select room</button>",
             "room_remove_button"=> "<button class='remove-the-room' id='remove-".$the_room->rm_id . "' style='display:none;'  value='".$the_room->rm_id . "'>remove room</button>",
-            "room_show_booking_form"=>"<form action=''><input class='show-booking-button' type='submit' style='display:none;' value='Book Now' /></form>"
+            "room_show_booking_form"=>"<form action=''><input id='book-".$the_room->rm_id . "'  class='show-booking-button' type='submit' style='display:none;' value='Book Now' /></form><hr>"
             
+           // "room_show_booking_form_new"=>"<form action=''><input id='book-".$the_room->rm_id . "'  class='show-booking-button-new' type='submit' style='display:none;' value='Book Now New' /></form>"
             );
           
 
